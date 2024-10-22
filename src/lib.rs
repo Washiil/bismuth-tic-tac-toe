@@ -13,7 +13,6 @@ const FILLED_BOARD: u16 = 0b_111_111_111;
 
 const WINNING_POSITIONS: [u16; 8] = [COL1, COL2, COL3, ROW1, ROW2, ROW3, DIA1, DIA2];
 
-
 fn evaluate_position(agent_x: u16, agent_o: u16) -> i8 {
     for pos in WINNING_POSITIONS {
         // If the AND of a winning position and the players board is true then they must have a winning position
@@ -40,11 +39,11 @@ pub fn generate_moves(board: u16) -> Vec<u16> {
     possible_moves
 }
 
-// Our minimax Function 
+// Our minimax Function
 pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i8, u16) {
     let score = evaluate_position(agent_x, agent_o);
     if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
-        return (score, 0)
+        return (score, 0);
     }
 
     if maximizing_player {
@@ -59,11 +58,10 @@ pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) 
             }
         }
         return (best_value, best_move);
-    }
-    else {
+    } else {
         let mut best_value = i8::MAX;
         let mut best_move = 0;
-        
+
         for pos in generate_moves(agent_x | agent_o) {
             let future_eval = minimax(agent_x, agent_o | pos, depth - 1, true);
             if future_eval.0 < best_value {
@@ -95,11 +93,9 @@ pub fn print_u16_as_board(agent_x: u16, agent_o: u16) {
 
         if agent_x & mask > 0 {
             print!("X")
-        }
-        else if agent_o & mask > 0 {
+        } else if agent_o & mask > 0 {
             print!("O")
-        }
-        else {
+        } else {
             print!(" ")
         }
     }
@@ -115,18 +111,16 @@ mod tests {
         let mut agent_x: u16 = 0b_000_000_000;
         let mut agent_o: u16 = 0b_000_000_000;
         let mut turn = false;
-        let mut iteration = 0;
+
         while agent_o | agent_x != FILLED_BOARD {
             let best_move = get_best_move(agent_x, agent_o, turn);
             if turn {
                 agent_x = agent_x | best_move;
-            }
-            else {
+            } else {
                 agent_o = agent_o | best_move;
             }
             print_u16_as_board(agent_x, agent_o);
             turn = !turn;
-            iteration += 1;
         }
     }
 }
