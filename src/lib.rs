@@ -39,7 +39,20 @@ pub fn generate_moves(board: u16) -> Vec<u16> {
     possible_moves
 }
 
-// Our minimax Function
+pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: i32, beta: i32, depth: i32, maximizing_player: bool) -> (i8, u16) {
+    let score = evaluate_position(agent_x, agent_o);
+    if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
+        return (score, 0)
+    }
+    if maximizing_player {
+        
+    }
+    else {
+
+    }
+    todo!()
+}
+
 pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i8, u16) {
     let score = evaluate_position(agent_x, agent_o);
     if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
