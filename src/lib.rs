@@ -1,3 +1,7 @@
+pub mod board;
+pub mod game;
+pub mod agent;
+
 const ROW1: u16 = 0b_111_000_000;
 const ROW2: u16 = 0b_000_111_000;
 const ROW3: u16 = 0b_000_000_111;
@@ -13,6 +17,7 @@ const FILLED_BOARD: u16 = 0b_111_111_111;
 
 const WINNING_POSITIONS: [u16; 8] = [COL1, COL2, COL3, ROW1, ROW2, ROW3, DIA1, DIA2];
 
+/// Evaluates the position for a win
 fn evaluate_position(agent_x: u16, agent_o: u16) -> i8 {
     for pos in WINNING_POSITIONS {
         // If the AND of a winning position and the players board is true then they must have a winning position
@@ -27,16 +32,12 @@ fn evaluate_position(agent_x: u16, agent_o: u16) -> i8 {
     0
 }
 
+/// Generates all possible tic-tac-toe moves by iterating over each of the bits and returning bits that dont have a space.
 pub fn generate_moves(board: u16) -> Vec<u16> {
-    let mut possible_moves = Vec::new();
-    for pos in 0..9 {
-        let mask = 1u16 << pos;
-
-        if board & mask == 0 {
-            possible_moves.push(mask);
-        }
-    }
-    possible_moves
+    (0..9)
+        .map(|i| 1u16 << i)
+        .filter(|mask| board & mask == 0)
+        .collect()
 }
 
 pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: i32, beta: i32, depth: i32, maximizing_player: bool) -> (i8, u16) {
@@ -55,6 +56,8 @@ pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: i32, beta: i32, depth: i32,
 
 pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i8, u16) {
     let score = evaluate_position(agent_x, agent_o);
+    
+    // Check if the game is in an terinary state
     if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
         return (score, 0);
     }
