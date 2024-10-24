@@ -1,3 +1,5 @@
+use std::future;
+
 pub mod board;
 pub mod game;
 pub mod agent;
@@ -18,7 +20,7 @@ const FILLED_BOARD: u16 = 0b_111_111_111;
 const WINNING_POSITIONS: [u16; 8] = [COL1, COL2, COL3, ROW1, ROW2, ROW3, DIA1, DIA2];
 
 /// Evaluates the position for a win
-fn evaluate_position(agent_x: u16, agent_o: u16) -> i8 {
+fn evaluate_position(agent_x: u16, agent_o: u16) -> i32 {
     for pos in WINNING_POSITIONS {
         // If the AND of a winning position and the players board is true then they must have a winning position
         if agent_x & pos == pos {
@@ -40,21 +42,62 @@ pub fn generate_moves(board: u16) -> Vec<u16> {
         .collect()
 }
 
-pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: i32, beta: i32, depth: i32, maximizing_player: bool) -> (i8, u16) {
+pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: &mut i32, beta: &mut i32, depth: i32, maximizing_player: bool) -> (i32, u16) {
     let score = evaluate_position(agent_x, agent_o);
-    if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
-        return (score, 0)
+
+    match score.cmp(&0) {
+        std::cmp::Ordering::Greater => {return (score - depth, 0)}
+        std::cmp::Ordering::Equal => (),
+        std::cmp::Ordering::Less => {return (score + depth, 0)}
     }
+
+    if depth == 0 || is_game_draw(agent_x | agent_o) {
+        return (0, 0) // Game was a draw and we ran out of depth
+    }
+
+    let possible_moves = generate_moves(agent_x | agent_o);
+
     if maximizing_player {
-        
+        let mut best_score = i32::MIN;
+        let mut best_move = 0;
+
+        for pos in possible_moves {
+            let future_eval = evaluate_position(agent_x | pos, agent_o);
+            if future_eval > best_score {
+                best_score = future_eval;
+                best_move = pos;
+            }
+
+            alpha = alpha.max(&mut best_score);
+            if beta <= alpha {
+                break;
+            }
+        }
+        return (best_score, best_move)
     }
     else {
+        let mut best_score = i32::MAX;
+        let mut best_move = 0;
 
+        for pos in possible_moves {
+            let future_eval = evaluate_position(agent_x, agent_o | pos);
+            if future_eval > best_score {
+                best_score = future_eval;
+                best_move = pos;
+            }
+
+            beta = alpha.max(&mut best_score);
+            if beta <= alpha {
+                break;
+            }
+        }
+        return (best_score, best_move)
     }
-    todo!()
+
+    (0, 0)
 }
 
-pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i8, u16) {
+pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i32, u16) {
     let score = evaluate_position(agent_x, agent_o);
     
     // Check if the game is in an terinary state
@@ -63,7 +106,7 @@ pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) 
     }
 
     if maximizing_player {
-        let mut best_value = i8::MIN;
+        let mut best_value = i32::MIN;
         let mut best_move = 0;
 
         for pos in generate_moves(agent_x | agent_o) {
@@ -75,7 +118,7 @@ pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) 
         }
         return (best_value, best_move);
     } else {
-        let mut best_value = i8::MAX;
+        let mut best_value = i32::MAX;
         let mut best_move = 0;
 
         for pos in generate_moves(agent_x | agent_o) {
