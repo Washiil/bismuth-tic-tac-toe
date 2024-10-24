@@ -12,4 +12,3 @@ pub const DIA2: u16 = 0b_001_010_100;
 pub const FILLED_BOARD: u16 = 0b_111_111_111;
 
 pub const WINNING_POSITIONS: [u16; 8] = [COL1, COL2, COL3, ROW1, ROW2, ROW3, DIA1, DIA2];
-

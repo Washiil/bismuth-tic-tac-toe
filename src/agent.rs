@@ -1,4 +1,4 @@
 pub enum Agent {
     X,
-    O
+    O,
 }

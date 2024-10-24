@@ -1,8 +1,8 @@
 use std::future;
 
+pub mod agent;
 pub mod board;
 pub mod game;
-pub mod agent;
 
 const ROW1: u16 = 0b_111_000_000;
 const ROW2: u16 = 0b_000_111_000;
@@ -42,17 +42,25 @@ pub fn generate_moves(board: u16) -> Vec<u16> {
         .collect()
 }
 
-pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: &mut i32, beta: &mut i32, depth: i32, maximizing_player: bool) -> (i32, u16) {
+pub fn alpha_beta(
+    agent_x: u16,
+    agent_o: u16,
+    mut alpha: i32,
+    mut beta: i32,
+    depth: i32,
+    maximizing_player: bool,
+) -> (i32, u16) {
+    // Check for terminal states
     let score = evaluate_position(agent_x, agent_o);
-
     match score.cmp(&0) {
-        std::cmp::Ordering::Greater => {return (score - depth, 0)}
+        std::cmp::Ordering::Greater => return (score - depth, 0),
+        std::cmp::Ordering::Less => return (score + depth, 0),
         std::cmp::Ordering::Equal => (),
-        std::cmp::Ordering::Less => {return (score + depth, 0)}
     }
 
+    // Check for leaf nodes
     if depth == 0 || is_game_draw(agent_x | agent_o) {
-        return (0, 0) // Game was a draw and we ran out of depth
+        return (0, 0);
     }
 
     let possible_moves = generate_moves(agent_x | agent_o);
@@ -62,44 +70,48 @@ pub fn alpha_beta(agent_x: u16, agent_o: u16, alpha: &mut i32, beta: &mut i32, d
         let mut best_move = 0;
 
         for pos in possible_moves {
-            let future_eval = evaluate_position(agent_x | pos, agent_o);
-            if future_eval > best_score {
-                best_score = future_eval;
+            // Make the move and recurse
+            let (score, _) = alpha_beta(agent_x | pos, agent_o, alpha, beta, depth - 1, false);
+
+            if score > best_score {
+                best_score = score;
                 best_move = pos;
             }
 
-            alpha = alpha.max(&mut best_score);
+            alpha = alpha.max(best_score);
             if beta <= alpha {
-                break;
+                break; // Beta cutoff
             }
         }
-        return (best_score, best_move)
-    }
-    else {
+
+        (best_score, best_move)
+    } else {
         let mut best_score = i32::MAX;
         let mut best_move = 0;
 
         for pos in possible_moves {
-            let future_eval = evaluate_position(agent_x, agent_o | pos);
-            if future_eval > best_score {
-                best_score = future_eval;
+            // Make the move and recurse
+            let (score, _) = alpha_beta(agent_x, agent_o | pos, alpha, beta, depth - 1, true);
+
+            if score < best_score {
+                // Changed from > to < for minimizing player
+                best_score = score;
                 best_move = pos;
             }
 
-            beta = alpha.max(&mut best_score);
+            beta = beta.min(best_score); // Changed from alpha.max to beta.min
             if beta <= alpha {
-                break;
+                break; // Alpha cutoff
             }
         }
-        return (best_score, best_move)
-    }
 
-    (0, 0)
+        (best_score, best_move)
+    }
 }
 
 pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) -> (i32, u16) {
     let score = evaluate_position(agent_x, agent_o);
-    
+
     // Check if the game is in an terinary state
     if score != 0 || depth == 0 || is_game_draw(agent_x | agent_o) {
         return (score, 0);
@@ -134,6 +146,11 @@ pub fn minimax(agent_x: u16, agent_o: u16, depth: i32, maximizing_player: bool) 
 
 pub fn get_best_move(agent_x: u16, agent_o: u16, is_x_turn: bool) -> u16 {
     let (_, best_move) = minimax(agent_x, agent_o, 18, is_x_turn);
+    best_move
+}
+
+pub fn get_best_alpha_beta(agent_x: u16, agent_o: u16, is_x_turn: bool) -> u16 {
+    let (_, best_move) = alpha_beta(agent_x, agent_o, i32::MIN, i32::MAX, 9, is_x_turn);
     best_move
 }
 

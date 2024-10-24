@@ -5,7 +5,7 @@ struct TicTacToe {
     board: u16,
     agent_x: u16,
     agent_o: u16,
-    turn: Agent
+    turn: Agent,
 }
 
 impl TicTacToe {
@@ -14,9 +14,7 @@ impl TicTacToe {
             board: 0,
             agent_x: 0,
             agent_o: 0,
-            turn: Agent::X
+            turn: Agent::X,
         }
     }
-
-    
 }
